@@ -32,6 +32,7 @@ struct centerNode
 	eventNode *child;
 	eventNode *parent;
 };
+
 u_int16_t get_port_number(sockaddr *);
 void *get_ip_address(sockaddr *);
 void acceptConnection(centerNode **,string);
