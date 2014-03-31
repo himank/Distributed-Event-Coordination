@@ -6,254 +6,263 @@
 // Description : Hello World in C++, Ansi-style
 //============================================================================
 
+#include "../src/decserver.h"
+#include <algorithm>
+#include <arpa/inet.h>
+#include <fstream>
 #include <iostream>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <vector>
-#include <algorithm>
 #include <signal.h>
 #include <sstream>
-#include "../src/decserver.h"
-#include <fstream>
+#include <vector>
 
 using namespace std;
 
 string filename="";
 bool logging = false;
-int main(int argc, char* argv[])
-{
+
+int main(int argc, char* argv[]) {
 	centerNode *root;
 	root = NULL;
 	string ip= "127.0.1.1";
 	string port = "9090";
 	bool server = false;
-		int opt = 0;
-        opt = getopt( argc, argv,"shc:p:l:" );
-        while( opt != -1 ) {
-            switch( opt ) {
-                case 's':
-                	server = true;
-                    break;
-                case 'c':
-                    server = false;
-                	ip.assign(optarg);
-                    break;
-                case 'h':
-                    printSummary();
-                    break;
-                case 'p':
-                	port.assign(optarg);
-                    break;
-                case 'l':
-                	filename.assign(optarg);
-                    logging = true;
-                	break;
-                default:
-                    break;
-            }
-            opt = getopt( argc, argv, "shc:p:l:" );
-        }
-    if(logging)
-    	cout<<"Logging is on everything on the server side will be printed on file"<<endl;
+	int opt = 0;
+	opt = getopt( argc, argv,"shc:p:l:" );
+	while( opt != -1 ) {
+		switch( opt ) {
+		case 's':
+			server = true;
+			break;
+		case 'c':
+			server = false;
+			ip.assign(optarg);
+			break;
+		case 'h':
+			printSummary();
+			break;
+		case 'p':
+			port.assign(optarg);
+			break;
+		case 'l':
+			filename.assign(optarg);
+			logging = true;
+			break;
+		default:
+			break;
+		}
+		opt = getopt( argc, argv, "shc:p:l:" );
+	}
 
-    if(server)
-    	acceptConnection(&root,port);
-    else
-    	initiateConnection(ip,port);
-    if(root != NULL) {
-    	while(root->next != NULL) {
-    			centerNode *temp = root;
-    			root = root->next;
-    			delete temp;
-    	}
-    	delete root;
-    	root = NULL;
-    }
-    signal(SIGINT, signal_callback_handler);
+	if(logging) {
+		cout<<"Logging is on everything on the server side will be printed on file"<<endl;
+	}
+
+	if(server) {
+		acceptConnection(&root, port);
+	} else {
+		initiateConnection(ip, port);
+	}
+
+	if(root != NULL) {
+		while(root->next != NULL) {
+			centerNode *temp = root;
+			root = root->next;
+			delete temp;
+		}
+		delete root;
+		root = NULL;
+	}
+
+	signal(SIGINT, signal_callback_handler);
 	return 0;
 }
 
 //*****************************************************Below function is used to return the port no of client
-u_int16_t get_port_number(struct sockaddr *s)
-{
-	if(s->sa_family == AF_INET)
+u_int16_t get_port_number(struct sockaddr *s) {
+	if(s->sa_family == AF_INET) {
 		return (((struct sockaddr_in  *)s)->sin_port);
-	else
+	} else {
 		return (((struct sockaddr_in6 *)s)->sin6_port);
+	}
 }
 
 //*****************************************************Below function is used to return ipaddress of client
-void *get_ip_address(sockaddr *s)
-{
-	if(s->sa_family == AF_INET)
+void *get_ip_address(sockaddr *s) {
+	if(s->sa_family == AF_INET) {
 		return &((sockaddr_in *)s)->sin_addr;
-	else
+	} else {
 		return &((sockaddr_in6 *)s)->sin6_addr;
+	}
 }
-void signal_callback_handler(int signum)
-{
+
+void signal_callback_handler(int signum) {
 	exit(signum);
 }
 
-void printSummary()
-{
-cout<<endl<<"**************************************************************************"<<endl<<endl;
-cout<<"Usage Summary: Same file will act as a server and client based on parameter passed"<<endl;
-cout<<"To Start Dec Server: ./decserver [-s] [−h] [-p port-number] [−l file]"<<endl;
-cout<<"To Start Dec Client: ./decserver [-c ip of server] [-p port-number of server]"<<endl<<endl;
-cout<<"Give -s parameter in args to indicate server mode"<<endl;
-cout<<"Give -c parameter in args to indicate client mode, if -c is not given then it will connect to localhost by default"<<endl;
-cout<<"Give -h parameter to display the summary"<<endl;
-cout<<"Give -p and then portno to change default port number for example: -p 8080"<<endl;
-cout<<"Give -l and then filename of logging file for example: logging.txt"<<endl;
-cout<<"Press ctrl+c to exit the client and server anytime"<<endl;
-cout<<endl<<"**************************************************************************"<<endl<<endl;
-exit(1);
+void printSummary() {
+	cout<<endl<<"**************************************************************************"<<endl<<endl;
+	cout<<"Usage Summary: Same file will act as a server and client based on parameter passed"<<endl;
+	cout<<"To Start Dec Server: ./decserver [-s] [−h] [-p port-number] [−l file]"<<endl;
+	cout<<"To Start Dec Client: ./decserver [-c ip of server] [-p port-number of server]"<<endl<<endl;
+	cout<<"Give -s parameter in args to indicate server mode"<<endl;
+	cout<<"Give -c parameter in args to indicate client mode, if -c is not given then it will connect to localhost by default"<<endl;
+	cout<<"Give -h parameter to display the summary"<<endl;
+	cout<<"Give -p and then portno to change default port number for example: -p 8080"<<endl;
+	cout<<"Give -l and then filename of logging file for example: logging.txt"<<endl;
+	cout<<"Press ctrl+c to exit the client and server anytime"<<endl;
+	cout<<endl<<"**************************************************************************"<<endl<<endl;
+	exit(1);
 }
 
-void generatingLog(string s)
-{
+void generatingLog(string s) {
 	ofstream logfile;
 	logfile.open(filename.c_str(), std::ios::app);
 	if( !logfile ) {
 		// file couldn't be opened
-	    cout << "Error: file could not be opened" << endl;
+		cout << "Error: file could not be opened" << endl;
 	}
 
 	logfile<<s<<endl;
 	logfile.close();
 }
 
-
 ////*****************************************************Below function is used for binding the socket and call the parse function
-void acceptConnection(centerNode **root, string port)
-{
+void acceptConnection(centerNode **root, string port) {
 	struct addrinfo inValue, *serverInfo, *validInfo, sockaddr_storage clientAddr;
 	int acceptId, address,yes;
 	int sockId, recvbytes=0;
 	char buffer[100], ip[INET6_ADDRSTRLEN];
-	
+
 	socklen_t addrlen;
 	memset(&inValue, 0, sizeof(inValue));
 	inValue.ai_family = AF_UNSPEC;
 	inValue.ai_socktype = SOCK_STREAM;
 	inValue.ai_flags = AI_PASSIVE;
 	yes=1;
-	
+
 	if (getaddrinfo(NULL, port.c_str(), &inValue, &serverInfo) != 0)
-	    perror("Get Address:");
-	
+		perror("Get Address:");
+
 	for(validInfo = serverInfo; validInfo != NULL; validInfo = validInfo->ai_next) {
-		if((sockId = (socket(validInfo->ai_family, validInfo->ai_socktype,0))) == -1)
-			perror("Socket:");
-		
+		if((sockId = (socket(validInfo->ai_family, validInfo->ai_socktype,0))) == -1) {
+			perror("Socket Error");
+		}
+
 		addrlen = sizeof(serverInfo);
-		
+
 		if (setsockopt(sockId, SOL_SOCKET, SO_REUSEADDR, &yes,sizeof(int)) == -1) {
 			perror("setsockopt");
-	        break;
-		}
-		
-		if(bind(sockId,validInfo->ai_addr, validInfo->ai_addrlen) == -1)
-			// successfully done with bind
-			perror("Bind:");
 			break;
 		}
-		struct sockaddr_in *ipv4 = (struct sockaddr_in *)validInfo->ai_addr;
-		void *addr;
-		addr = &(ipv4->sin_addr);
-		inet_ntop(validInfo->ai_family,addr, ip, sizeof(ip));
-		freeaddrinfo(serverInfo);
-		cout<<"dec_server$: "<<"Server is listening on IP: "<<ip<<" Port :"<<port<<endl;
-		if(listen(sockId, 10) == -1)
-			perror("Listen:");
 
-		while(true) {
-			address = sizeof(clientAddr);
-			if((acceptId = accept(sockId,(struct sockaddr*)&clientAddr,(socklen_t *)&address)) == -1)
-				perror("Accept:");
-			if((recvbytes = (recv(acceptId, buffer, sizeof(buffer),0))) == -1) {
-		    	perror("Receive:");
-		    	exit(1);
-		    }
-			buffer[recvbytes] = '\0';
-			stringstream ss;
-			ss<<"dec_server$: request received from ";
-			ss<<ip;
-			ss<<" : ";
-			ss<<buffer;
-			string s = ss.str();
-			string request(buffer);
-			if(logging)
-				generatingLog(s);
-			else
-				cout<<"dec_server$: request received from "<<ip<<" : "<<endl<<buffer<<endl;
-			parse(request, &(*root),acceptId);
-			close(acceptId);
+		if(bind(sockId,validInfo->ai_addr, validInfo->ai_addrlen) == -1)
+			// successfully done with bind
+			perror("Bind Error");
+		break;
+	}
+
+	struct sockaddr_in *ipv4 = (struct sockaddr_in *)validInfo->ai_addr;
+	void *addr;
+	addr = &(ipv4->sin_addr);
+	inet_ntop(validInfo->ai_family,addr, ip, sizeof(ip));
+	freeaddrinfo(serverInfo);
+
+	cout<<"dec_server$: "<<"Server is listening on IP: "<<ip<<" Port :"<<port<<endl;
+
+	if(listen(sockId, 10) == -1) {
+		perror("Listen Error");
+	}
+
+	while(true) {
+		address = sizeof(clientAddr);
+		if((acceptId = accept(sockId,(struct sockaddr*)&clientAddr,(socklen_t *)&address)) == -1) {
+			perror("Accept Error");
 		}
+
+		if((recvbytes = (recv(acceptId, buffer, sizeof(buffer),0))) == -1) {
+			perror("Receive Error");
+			exit(1);
+		}
+
+		buffer[recvbytes] = '\0';
+		stringstream ss;
+		ss<<"dec_server$: request received from ";
+		ss<<ip;
+		ss<<" : ";
+		ss<<buffer;
+		string s = ss.str();
+		string request(buffer);
+		if(logging) {
+			generatingLog(s);
+		} else {
+			cout<<"dec_server$: request received from "<<ip<<" : "<<endl<<buffer<<endl;
+		}
+
+		parse(request, &(*root),acceptId);
+		close(acceptId);
+	}
 }
 
 ////*****************************************************Below function is only work when from cmd this code will be use as client only
-void initiateConnection(string ip, string port)
-{
+void initiateConnection(string ip, string port) {
 	int recvbytes=1, sockfd = 0;
-    char recvBuff[1024], buffer[100];
-    struct sockaddr_in serv_addr;
+	char recvBuff[1024], buffer[100];
+	struct sockaddr_in serv_addr;
 
-    while(true) {
-    	memset(recvBuff, '0',sizeof(recvBuff));
-    	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-	        cout<<"\n Error : Could not create socket \n";
-	        exit(1);
-    	}
+	while(true) {
+		memset(recvBuff, '0',sizeof(recvBuff));
+		if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+			cout<<"\n Error : Could not create socket \n";
+			exit(1);
+		}
 
-    	memset(&serv_addr, '0', sizeof(serv_addr));
-    	serv_addr.sin_family = AF_INET;
-    	serv_addr.sin_port = htons(atoi(port.c_str()));
-    	
+		memset(&serv_addr, '0', sizeof(serv_addr));
+		serv_addr.sin_family = AF_INET;
+		serv_addr.sin_port = htons(atoi(port.c_str()));
+
 		if(inet_pton(AF_INET,ip.c_str(), &serv_addr.sin_addr)<=0) {
-    		cout<<"\n inet_pton error occured\n";
-    		exit(1);
-    	}
-    	
-		string request;
-    	cout<<endl<<"dec_client$: ";
-    	getline(cin,request);
-    	
-		if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-    	       cout<<"\n Error : Connect Failed \n";
-    	       exit(1);
-    	}
-    	
-		if (send(sockfd, request.c_str(), strlen(request.c_str()), 0) == -1){
-	   		perror("send");
-    	}
+			cout<<"\n inet_pton error occured\n";
+			exit(1);
+		}
 
-	   	while(true) {
-	   		if((recvbytes = (recv(sockfd, buffer, sizeof(buffer),0))) == -1) {
-	   			perror("receive");
-	   			break;
-	   		}
-	   		if(recvbytes == 0)
-	   			break;
-	   		buffer[recvbytes] = '\0';
-	   		cout<<"dec_client$: "<<buffer;
-	   	}
-	   	close(sockfd);
+		string request;
+		cout<<endl<<"dec_client$: ";
+		getline(cin,request);
+
+		if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+			cout<<"\n Error : Connect Failed \n";
+			exit(1);
+		}
+
+		if (send(sockfd, request.c_str(), strlen(request.c_str()), 0) == -1){
+			perror("send");
+		}
+
+		while(true) {
+			if((recvbytes = (recv(sockfd, buffer, sizeof(buffer),0))) == -1) {
+				perror("receive");
+				break;
+			}
+			if(recvbytes == 0)
+				break;
+			buffer[recvbytes] = '\0';
+			cout<<"dec_client$: "<<buffer;
+		}
+		close(sockfd);
 	}
 }
 
 ////*****************************************************Below function is used for parsing the incoming request
-void parse(string input, centerNode **root, int acceptId)
-{
+void parse(string input, centerNode **root, int acceptId) {
 	vector<string> requestLine;
 	int initial = 0;
 	int next = input.find_first_of(";", initial);
-	
+
 	while(next>0) {
 		requestLine.push_back(input.substr(initial,next-initial));
 		initial = next+1;
@@ -272,7 +281,7 @@ void parse(string input, centerNode **root, int acceptId)
 			cmd.push_back(s);
 			tokens = strtok(NULL," ");
 		}
-		
+
 		vector<string>::iterator iit = cmd.begin();
 		transform((*iit).begin(),(*iit).end(),(*iit).begin(),::toupper);
 		if((*iit).compare("INSERT") == 0) {
@@ -280,17 +289,20 @@ void parse(string input, centerNode **root, int acceptId)
 			if(flag == true) {
 				string s = "response from server: Illegal Event, Insert Request Failed:";
 				string temp = "dec_server$ : Illegal Event, Insert Request Failed:";
-				
-				if(logging)
-					generatingLog(temp);
-				else
-					cout<<temp<<endl;
 
-				if (send(acceptId,s.c_str() , strlen(s.c_str()), 0) == -1)
+				if(logging) {
+					generatingLog(temp);
+				} else {
+					cout<<temp<<endl;
+				}
+
+				if (send(acceptId,s.c_str() , strlen(s.c_str()), 0) == -1) {
 					perror("send");
-				
-				if (send(acceptId,"\n" ,1, 0) == -1)
+				}
+
+				if (send(acceptId,"\n" ,1, 0) == -1) {
 					perror("send");
+				}
 			} else {
 				int dup = 0;
 				for(++iit; iit!=cmd.end(); ++iit) {
@@ -318,13 +330,13 @@ void parse(string input, centerNode **root, int acceptId)
 						generatingLog(temp);
 					else
 						cout<<temp<<endl;
-					
+
 					if (send(acceptId,s.c_str() , strlen(s.c_str()), 0) == -1)
 						perror("send");
-					
+
 					if (send(acceptId,"\n" ,1, 0) == -1)
 						perror("send");
-				}else {
+				} else {
 					string temp = "dec_server$: Insert Done";
 					if(logging)
 						generatingLog(temp);
@@ -334,7 +346,7 @@ void parse(string input, centerNode **root, int acceptId)
 					string s = "response from server: Insert Successful";
 					if (send(acceptId,s.c_str() , strlen(s.c_str()), 0) == -1)
 						perror("send");
-					
+
 					if (send(acceptId,"\n" ,1, 0) == -1)
 						perror("send");
 				}
@@ -356,35 +368,34 @@ void parse(string input, centerNode **root, int acceptId)
 
 			string s = "response from server: Reset Done";
 			if (send(acceptId,s.c_str() , strlen(s.c_str()), 0) == -1)
-					perror("send");
+				perror("send");
 			if (send(acceptId,"\n" ,1, 0) == -1)
-					perror("send");
+				perror("send");
 		}
 		delete []request_tokenizer;
 	}
 
 }
 
-void reset(centerNode **root)
-{
+void reset(centerNode **root) {
 	while((*root)->next != NULL) {
 		centerNode *temp = *root;
 		(*root) = (*root)->next;
 		delete temp;
 	}
+
 	delete *root;
 	*root = NULL;
 
 }
 
-bool checkRequest(vector<string> request, centerNode **root)
-{
+bool checkRequest(vector<string> request, centerNode **root) {
 	vector<string>::iterator iit = request.begin();
 	centerNode *cn = new centerNode;
 	cn = NULL;
 	int dup =0;
 	bool flag = false;
-	
+
 	for(++iit; iit!=request.end(); ++iit) {
 		char from = (*iit).at(0);
 		char to = (*iit).at(3);
@@ -409,23 +420,24 @@ bool checkRequest(vector<string> request, centerNode **root)
 			cn = cn->next;
 			delete temp;
 		}
-			delete cn;
-			cn = NULL;
+		delete cn;
+		cn = NULL;
 	}
 
 	iit = request.begin();
 	for(++iit; iit!=request.end(); ++iit) {
-			char from = (*iit).at(0);
-			char to = (*iit).at(3);
-			flag = checkRequestGraph(from, to, &(*root));
-			if (flag)
-				return flag;
+		char from = (*iit).at(0);
+		char to = (*iit).at(3);
+		flag = checkRequestGraph(from, to, &(*root));
+		if (flag) {
+			return flag;
+		}
 	}
-return false;
+
+	return false;
 }
 
-bool checkRequestGraph(char from, char to, centerNode **root)
-{
+bool checkRequestGraph(char from, char to, centerNode **root) {
 	centerNode *temp = *root;
 	while(temp != NULL) {
 		if(temp->eventNo == from) {
@@ -443,8 +455,7 @@ bool checkRequestGraph(char from, char to, centerNode **root)
 }
 
 //*****************************************************Below function is used for adding new request
-bool addNode(char from, char to, centerNode **root, int &dup)
-{
+bool addNode(char from, char to, centerNode **root, int &dup) {
 	bool eventIllegal = false;
 	if(*root==NULL) {				// when the event start root is null
 		*root = new centerNode;
@@ -453,7 +464,7 @@ bool addNode(char from, char to, centerNode **root, int &dup)
 		(*root)->child->eventNo = to;
 		(*root)->child->next = NULL;
 		(*root)->parent = NULL;
-		
+
 		centerNode *temp = *root;
 		temp->next = new centerNode;
 		temp = temp->next;
@@ -463,15 +474,14 @@ bool addNode(char from, char to, centerNode **root, int &dup)
 		temp->parent->next = NULL;
 		temp->next = NULL;
 		temp->child = NULL;
-	}else {
+	} else {
 		eventIllegal=fromEventHandler(from,to,&(*root), dup);
 	}
-return eventIllegal;
+	return eventIllegal;
 }
 
 //*****************************************************Below function is used for handling parent event
-bool fromEventHandler(char from, char to, centerNode **root, int &duplic)
-{
+bool fromEventHandler(char from, char to, centerNode **root, int &duplic) {
 	centerNode *node = *root;
 	centerNode *temp = node;
 	int flag =0,illegal = 0;
@@ -485,6 +495,7 @@ bool fromEventHandler(char from, char to, centerNode **root, int &duplic)
 		temp = node;
 		node = node->next;
 	}
+
 	if(flag) {
 		eventNode *parent = node->parent;
 		while(parent != NULL) {
@@ -503,7 +514,7 @@ bool fromEventHandler(char from, char to, centerNode **root, int &duplic)
 				node->child->next = NULL;
 				toEventHandler(from,to,&(*root),node);		// pass this "from" node into this function so tht we have the trac of parent of "to"
 
-			}else {
+			} else {
 				int dup =0;
 				eventNode *temp = node->child;
 				eventNode *child = node->child;
@@ -517,9 +528,10 @@ bool fromEventHandler(char from, char to, centerNode **root, int &duplic)
 					child = temp;
 					temp = temp->next;
 				}
+
 				if(dup) {
 					duplic = 1;						// So that in the parse function we can detect duplicate
-				}else {
+				} else {
 					child->next = new eventNode;
 					child = child->next;
 					child->eventNo = to;
@@ -527,7 +539,7 @@ bool fromEventHandler(char from, char to, centerNode **root, int &duplic)
 					toEventHandler(from,to,&(*root),node);		// pass this "from" node into this function so tht we have the trac of parent of "to"
 				}
 			}
-		}else {
+		} else {
 			bool eventIllegal = true;					// If event is illegal return true to function checkRequest
 			return eventIllegal;
 		}
@@ -542,12 +554,12 @@ bool fromEventHandler(char from, char to, centerNode **root, int &duplic)
 		temp->next = NULL;
 		toEventHandler(from,to,&(*root),temp);
 	}
-return false;
+
+	return false;
 }
 
 //*****************************************************Below function is used for handling event child event
-void toEventHandler(char from, char to, centerNode **root,centerNode *node)
-{
+void toEventHandler(char from, char to, centerNode **root,centerNode *node) {
 	centerNode *down = *root;
 	centerNode *temp = *root;
 	int flag =0;
@@ -558,9 +570,11 @@ void toEventHandler(char from, char to, centerNode **root,centerNode *node)
 		}else {
 			flag = 0;
 		}
+
 		temp = down;
 		down = down->next;
 	}
+
 	if(flag) {
 		int dup = 0;
 		eventNode *tmp = down->parent;
@@ -576,6 +590,7 @@ void toEventHandler(char from, char to, centerNode **root,centerNode *node)
 			parent = tmp;
 			tmp = tmp->next;
 		}
+
 		if(!dup) {									// if not duplicacy then add the "from" node into "to" parent list and also all parent of "from"
 			eventNode *fromParent = node->parent;
 			parent->next = new eventNode;
@@ -617,7 +632,7 @@ void toEventHandler(char from, char to, centerNode **root,centerNode *node)
 		temp->parent->eventNo = node->eventNo;
 		temp->parent->next = NULL;
 		eventNode *parent = temp->parent;
-		
+
 		while(fromParent != NULL) {
 			// copying all the parent of "from" node to "to" node
 			parent->next = new eventNode;
@@ -694,9 +709,9 @@ void isPresent(char from, char to, centerNode **root, int acceptId)
 					cout<<temp<<endl;
 
 				if (send(acceptId,s.c_str() , strlen(s.c_str()), 0) == -1)
-						perror("send");
+					perror("send");
 				if (send(acceptId,"\n" ,1, 0) == -1)
-						perror("send");
+					perror("send");
 			}
 		}else if(found) {
 			stringstream ss;
@@ -712,9 +727,9 @@ void isPresent(char from, char to, centerNode **root, int acceptId)
 				cout<<temp<<endl;
 
 			if (send(acceptId,s.c_str() , strlen(s.c_str()), 0) == -1)
-					perror("send");
+				perror("send");
 			if (send(acceptId,"\n" ,1, 0) == -1)
-					perror("send");
+				perror("send");
 		}else {
 
 			string temp = "dec_server$: Concurrent Events";
@@ -725,9 +740,9 @@ void isPresent(char from, char to, centerNode **root, int acceptId)
 
 			string s = "response from server: Concurrent Events";
 			if (send(acceptId,s.c_str() , strlen(s.c_str()), 0) == -1)
-					perror("send");
+				perror("send");
 			if (send(acceptId,"\n" ,1, 0) == -1)
-					perror("send");
+				perror("send");
 		}
 	}else if(!flag1) {
 		string temp = "dec_server$: Event Missing";
@@ -740,9 +755,9 @@ void isPresent(char from, char to, centerNode **root, int acceptId)
 		ss<<to;
 		string s = ss.str();
 		if (send(acceptId,s.c_str() , strlen(s.c_str()), 0) == -1)
-				perror("send");
+			perror("send");
 		if (send(acceptId,"\n" ,1, 0) == -1)
-				perror("send");
+			perror("send");
 	}else if(!flag2) {
 		string temp = "dec_server$: Event Missing";
 		if(logging)
@@ -756,8 +771,8 @@ void isPresent(char from, char to, centerNode **root, int acceptId)
 		string s = ss.str();
 
 		if (send(acceptId,s.c_str() , strlen(s.c_str()), 0) == -1)
-				perror("send");
+			perror("send");
 		if (send(acceptId,"\n" ,1, 0) == -1)
-				perror("send");
+			perror("send");
 	}
 }
