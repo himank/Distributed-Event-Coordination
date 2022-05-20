@@ -5,7 +5,9 @@ dec_server is the server component of the Distributed Event Coordination (DEC) S
 
 
 There can be three different requests coming from clients:
-  * Insert request : This request from any client will enter new event ordering information to the server using the happened–before relationship. 
+
+## Insert Request
+This request from any client will enter new event ordering information to the server using the happened–before relationship. 
 In this relationship, events will be represented with capital letters (i.e., A, B, C, D… etc), and the happened before relationship will be represented with “->” (dash and right angle bracket). The event orderings will be separated with “white space” and will end with a semicolon.
 
 Example for an insert request:
@@ -20,8 +22,8 @@ Event A happened before event B; event B happened before event C; and event C ha
 
 After receiving the insert request, the DEC server will insert this event ordering information to its global event ordering graph. If the insertion is successful, it will return to the client an “INSERT DONE” message.
 
-  * Query request: This request from any client will ask the relative ordering between any two events. The queried events in this request will be separated with “white space” and will end 
-with a semicolon.
+## Query request
+This request from any client will ask the relative ordering between any two events. The queried events in this request will be separated with “white space” and will end with a semicolon.
 
 Example for a query request:
 ```shell
@@ -45,7 +47,8 @@ dec_client1$ response from server: Event not found: G.
 dec_client1$ _
 ```
 
-  * Reset request: This request from any client will reset the global event ordering graph at the server. The reset request will not take any arguments and will be followed by a semicolon.
+## Reset Request
+This request from any client will reset the global event ordering graph at the server. The reset request will not take any arguments and will be followed by a semicolon.
 
 Example for a reset request:
 ```shell
