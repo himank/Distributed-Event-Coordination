@@ -60,7 +60,7 @@ dec_client is the client component of the Distributed Event Coordination
 (DEC) System. It will connect to the DEC server running on particular host and port number and 
 willsend the server one of the three requests mentioned above.
 
-Command Line:
+## Command Line
   * Step1: ./decserver [-s] [-h] [-p port-number] [-l file]
     - a) if [-p port-number] is not given then by default it will run on port 9090
     - b) if [-l file] filename is not given then it will print to stdout
